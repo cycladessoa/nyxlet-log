@@ -89,8 +89,13 @@ public class LogAppender extends ChainableActionHandler {
 
     @Override
     public void handleSTROMAResponse (NyxletSession nyxletSession, Map<String, List<String>> baseParameters, STROMAResponseWriter stromaResponseWriter, STROMAResponse stromaResponse) throws Exception {
-        if (!baseParameters.containsKey(LOG_ENTRY_PARAMETER)) throw new CycladesException("Cannot detect parameter: " + LOG_ENTRY_PARAMETER, ResponseCodeEnum.REQUEST_VALIDATION_FAULT.getCode());
-        handleLocal(nyxletSession, baseParameters, stromaResponseWriter, baseParameters.get(LOG_ENTRY_PARAMETER).get(0));
+        if (nyxletSession.containsMapChannelKey(BINARY_INPUT_MAP_CHANNEL_KEY)) {
+            String encoding = (baseParameters.containsKey(BINARY_TO_STRING_ENCODING)) ? baseParameters.get(BINARY_TO_STRING_ENCODING).get(0) : "UTF-8";
+            handleLocal(nyxletSession, baseParameters, stromaResponseWriter, new String((byte[])nyxletSession.getMapChannelObject(BINARY_INPUT_MAP_CHANNEL_KEY), encoding));
+        } else {
+            if (!baseParameters.containsKey(LOG_ENTRY_PARAMETER)) throw new CycladesException("Cannot detect parameter: " + LOG_ENTRY_PARAMETER, ResponseCodeEnum.REQUEST_VALIDATION_FAULT.getCode());
+            handleLocal(nyxletSession, baseParameters, stromaResponseWriter, baseParameters.get(LOG_ENTRY_PARAMETER).get(0));
+        }
     }
 
     public void handleLocal (NyxletSession sessionDelegate, Map<String, List<String>> baseParameters, STROMAResponseWriter stromaResponseWriter, String entry) throws Exception {
@@ -117,9 +122,11 @@ public class LogAppender extends ChainableActionHandler {
     }
 
     private Map<String, LogWriterDelegate> logWriters = new HashMap<String, LogWriterDelegate>();
-    public static final String LOG_WRITERS_PROPERTY     = "logWriters";
-    public static final String LOG_ENTRY_PARAMETER      = "entry";
-    public static final String LOG_ALIAS_PARAMETER      = "alias";
-    public static final String INPUT_MAP_CHANNEL_KEY    = "string";
-
+    public static final String LOG_WRITERS_PROPERTY         = "logWriters";
+    public static final String LOG_ENTRY_PARAMETER          = "entry";
+    public static final String LOG_ALIAS_PARAMETER          = "alias";
+    public static final String BINARY_TO_STRING_ENCODING    = "encoding";
+    public static final String INPUT_MAP_CHANNEL_KEY        = "string";
+    public static final String BINARY_INPUT_MAP_CHANNEL_KEY = "binary";
+    
 }
